@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { SCENARIOS } from "./data/scenarios";
 import { PROFILES } from "./data/profiles";
 import {
@@ -10,6 +10,8 @@ import {
   createEmptySessionState
 } from "./state";
 import { Avatar } from "./components/Avatar";
+import { generateProfileImage } from "./generateProfileImage";
+import QRCode from "qrcode";
 
 const STORAGE_KEY = "security-profile-session";
 
@@ -53,6 +55,11 @@ export const App: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [pendingName, setPendingName] = useState("");
 
+  // -- Share step state: generated profile image + QR code --
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   useEffect(() => {
     setState(loadInitialState());
   }, []);
@@ -79,6 +86,65 @@ export const App: React.FC = () => {
     }
   }, [state]);
 
+  /**
+   * Generate the profile card image and a QR code that triggers its download.
+   * Both are created as data URLs — fully client-side, no backend.
+   */
+  const handleGenerateShare = useCallback(async () => {
+    if (!state?.result || isGenerating) return;
+
+    const prof = PROFILES.find((p) => p.profile_id === state.result!.profileId) ?? PROFILES[0];
+
+    setIsGenerating(true);
+    try {
+      // 1. Render the result card to a PNG data-URL via Canvas
+      const traitText = traitLabel(state.result.trait);
+      const imageDataUrl = await generateProfileImage(
+        prof,
+        state.userName,
+        traitText
+      );
+      setProfileImageUrl(imageDataUrl);
+
+      // 2. Build a URL pointing to this same app with query params.
+      //    When scanned, the app opens in DownloadView mode, regenerates
+      //    the image on-the-fly, and offers a download button.
+      //    Params: p = profileId, n = userName, t = trait
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareParams = new URLSearchParams();
+      shareParams.set("p", state.result!.profileId);
+      if (state.userName) shareParams.set("n", state.userName);
+      if (state.result!.trait) shareParams.set("t", state.result!.trait);
+      const shareUrl = `${baseUrl}?${shareParams.toString()}`;
+
+      const qrDataUrl = await QRCode.toDataURL(shareUrl, {
+        width: 200,
+        margin: 2,
+        color: { dark: "#242424", light: "#ffffff" },
+      });
+      setQrCodeUrl(qrDataUrl);
+    } catch (err) {
+      console.error("Error generating share assets:", err);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [state, isGenerating]);
+
+  /**
+   * Trigger a file download of the generated PNG image.
+   * Creates a temporary <a> element with download attribute.
+   */
+  const handleDownloadImage = useCallback(() => {
+    if (!profileImageUrl) return;
+    const link = document.createElement("a");
+    link.href = profileImageUrl;
+    link.download = `security-profile-${state?.userName || "result"}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [profileImageUrl, state?.userName]);
+
+  // ── Early return: nothing to render until state is loaded ──
   if (!state) {
     return null;
   }
@@ -216,10 +282,17 @@ export const App: React.FC = () => {
   return (
     <div className="app-root">
       <main className="shell">
+        {/* Microsoft-branded header for Security Summit */}
         <header className="app-header">
           <div className="app-brand">
-            <span className="brand-dot" />
-            <span className="brand-title">Tu perfil en seguridad</span>
+            {/* Microsoft four-square logo */}
+            <svg className="ms-logo" viewBox="0 0 21 21" aria-hidden="true">
+              <rect x="0" y="0" width="10" height="10" fill="#f25022" />
+              <rect x="11" y="0" width="10" height="10" fill="#7fba00" />
+              <rect x="0" y="11" width="10" height="10" fill="#00a4ef" />
+              <rect x="11" y="11" width="10" height="10" fill="#ffb900" />
+            </svg>
+            <span className="brand-title">Security Summit</span>
           </div>
           <div className="app-subtitle">
             Decisiones rápidas en 3 situaciones. 3 minutos.
@@ -445,13 +518,114 @@ export const App: React.FC = () => {
                   Capacidades representadas: {profile.product_anchor}.
                 </p>
 
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleReset}
-                >
-                  Repetir
-                </button>
+                {/* Actions: download as image / QR or restart */}
+                <div className="result-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      // Navigate to share step and generate image + QR
+                      setProfileImageUrl(null);
+                      setQrCodeUrl(null);
+                      handleGoToStep("share");
+                      // Start generation after navigating
+                      setTimeout(() => handleGenerateShare(), 50);
+                    }}
+                  >
+                    Descargar resultado
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={handleReset}
+                  >
+                    Repetir
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Share step: QR code + downloadable image ── */}
+          {state.step === "share" && state.result && profile && (
+            <div className="screen screen-visible">
+              <div className="card">
+                <h2 className="screen-title">Tu resultado</h2>
+
+                {isGenerating ? (
+                  /* Loading state while canvas renders */
+                  <div className="card-centered">
+                    <div className="loader" aria-hidden="true" />
+                    <p className="screen-body computing-text">
+                      Generando imagen…
+                    </p>
+                  </div>
+                ) : profileImageUrl && qrCodeUrl ? (
+                  /* Generated: show preview, QR, and download button */
+                  <div className="share-content">
+                    {/* Small preview of the generated profile card */}
+                    <div className="share-preview">
+                      <img
+                        src={profileImageUrl}
+                        alt="Tu perfil de seguridad"
+                        className="share-preview-img"
+                      />
+                    </div>
+
+                    {/* QR code — scan to open/download the image */}
+                    <div className="share-qr">
+                      <img
+                        src={qrCodeUrl}
+                        alt="Código QR para descargar tu perfil"
+                        className="share-qr-img"
+                      />
+                      <p className="share-qr-hint">
+                        Escanea para descargar tu perfil
+                      </p>
+                    </div>
+
+                    {/* Direct download button */}
+                    <div className="result-actions">
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleDownloadImage}
+                      >
+                        Descargar imagen
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => handleGoToStep("result")}
+                      >
+                        Volver
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={handleReset}
+                      style={{ marginTop: 8, width: "100%" }}
+                    >
+                      Empezar de nuevo
+                    </button>
+                  </div>
+                ) : (
+                  /* Error fallback */
+                  <div className="card-centered">
+                    <p className="screen-body">
+                      No se pudo generar la imagen. Inténtalo de nuevo.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleGenerateShare}
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

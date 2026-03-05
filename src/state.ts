@@ -9,7 +9,8 @@ export type Step =
   | "brief"
   | "scenario"
   | "computing"
-  | "result";
+  | "result"
+  | "share"; // Final step: QR code + downloadable profile image
 
 export type Answer = {
   scenarioId: string;
