@@ -51,6 +51,7 @@ export const App: React.FC = () => {
   const [state, setState] = useState<SessionState | null>(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [pendingName, setPendingName] = useState("");
 
   useEffect(() => {
     setState(loadInitialState());
@@ -98,13 +99,39 @@ export const App: React.FC = () => {
     const newSessionId = createSessionId();
     const fresh: SessionState = {
       ...createEmptySessionState(newSessionId),
-      step: "brief"
+      step: "name"
     };
+    setPendingName("");
     setState(fresh);
   };
 
   const handleContinueFromBrief = () => {
     handleGoToStep("scenario");
+  };
+
+  const handleConfirmName = () => {
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            userName: pendingName.trim().slice(0, 24) || undefined,
+            step: "brief"
+          }
+        : prev
+    );
+  };
+
+  const handleSkipName = () => {
+    setPendingName("");
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            userName: undefined,
+            step: "brief"
+          }
+        : prev
+    );
   };
 
   const handleSelectOption = (optionId: string) => {
@@ -145,7 +172,7 @@ export const App: React.FC = () => {
         setTimeout(() => {
           setState((current) => {
             if (!current) return current;
-            const result = computeResult(updatedAnswers);
+            const result = computeResult(updatedAnswers, current.sessionId);
             return {
               ...current,
               answers: updatedAnswers,
@@ -195,7 +222,7 @@ export const App: React.FC = () => {
             <span className="brand-title">Tu perfil en seguridad</span>
           </div>
           <div className="app-subtitle">
-            Decisiones rápidas en 5 situaciones. 3 minutos.
+            Decisiones rápidas en 3 situaciones. 3 minutos.
           </div>
         </header>
 
@@ -226,7 +253,7 @@ export const App: React.FC = () => {
             <div className="screen screen-visible">
               <div className="card">
                 <div className="progress">
-                  <div className="progress-label">Situaciones 0/5</div>
+                  <div className="progress-label">Situaciones 0/3</div>
                   <div className="progress-bar">
                     <div
                       className="progress-bar-fill"
@@ -249,6 +276,51 @@ export const App: React.FC = () => {
                 >
                   Continuar
                 </button>
+              </div>
+            </div>
+          )}
+
+          {state.step === "name" && (
+            <div className="screen screen-visible">
+              <div className="card">
+                <h2 className="screen-title">Antes de empezar</h2>
+                <p className="screen-body">
+                  ¿Cómo te llamas? Lo usaremos solo para personalizar tu
+                  resultado.
+                </p>
+                <div className="name-field">
+                  <label className="name-label" htmlFor="user-name-input">
+                    ¿Cómo te llamas?
+                  </label>
+                  <input
+                    id="user-name-input"
+                    className="name-input"
+                    type="text"
+                    placeholder="Nombre (opcional)"
+                    maxLength={24}
+                    value={pendingName}
+                    onChange={(e) => setPendingName(e.target.value)}
+                  />
+                  <p className="name-helper">
+                    Lo usaremos solo para personalizar tu resultado.
+                  </p>
+                </div>
+                <div className="scenario-actions">
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={handleSkipName}
+                  >
+                    Saltar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleConfirmName}
+                  >
+                    Continuar
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -339,7 +411,11 @@ export const App: React.FC = () => {
           {state.step === "result" && state.result && profile && (
             <div className="screen screen-visible">
               <div className="card">
-                <h2 className="screen-title">Tu perfil</h2>
+                <h2 className="screen-title">
+                  {state.userName
+                    ? `${state.userName}, tu perfil`
+                    : "Tu perfil"}
+                </h2>
                 <Avatar profile={profile} />
                 <h3 className="profile-name">{profile.name}</h3>
                 <p className="screen-body">{profile.summary_template}</p>

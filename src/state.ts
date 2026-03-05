@@ -5,6 +5,7 @@ import { PROFILE_PROTOTYPES } from "./data/profiles";
 
 export type Step =
   | "landing"
+  | "name"
   | "brief"
   | "scenario"
   | "computing"
@@ -26,6 +27,7 @@ export type SessionResult = {
 
 export type SessionState = {
   sessionId: string;
+  userName?: string;
   step: Step;
   scenarioIndex: number;
   answers: Answer[];
@@ -33,8 +35,8 @@ export type SessionState = {
   result?: SessionResult;
 };
 
-const SCORE_MIN = -2;
-const SCORE_MAX = 2;
+const SCORE_UI_MIN = -2;
+const SCORE_UI_MAX = 2;
 
 export const initialScore = (): ScoreVector => ({
   tech_depth: 0,
@@ -51,11 +53,11 @@ export const createEmptySessionState = (sessionId: string): SessionState => ({
   score: initialScore()
 });
 
-export const normalizeScore = (score: ScoreVector): ScoreVector => ({
-  tech_depth: clamp(score.tech_depth, SCORE_MIN, SCORE_MAX),
-  posture: clamp(score.posture, SCORE_MIN, SCORE_MAX),
-  governance: clamp(score.governance, SCORE_MIN, SCORE_MAX),
-  risk_style: clamp(score.risk_style, SCORE_MIN, SCORE_MAX)
+export const normalizeScoreForUi = (score: ScoreVector): ScoreVector => ({
+  tech_depth: clamp(score.tech_depth, SCORE_UI_MIN, SCORE_UI_MAX),
+  posture: clamp(score.posture, SCORE_UI_MIN, SCORE_UI_MAX),
+  governance: clamp(score.governance, SCORE_UI_MIN, SCORE_UI_MAX),
+  risk_style: clamp(score.risk_style, SCORE_UI_MIN, SCORE_UI_MAX)
 });
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -82,7 +84,8 @@ export const recomputeScore = (answers: Answer[]): ScoreVector => {
     initialScore()
   );
 
-  return normalizeScore(aggregate);
+  // Intentionally no clamp here: distances must use raw score.
+  return aggregate;
 };
 
 export const computeTrait = (score: ScoreVector): TraitId => {
@@ -113,30 +116,34 @@ export const computeTrait = (score: ScoreVector): TraitId => {
   }
 };
 
-export const chooseProfile = (score: ScoreVector): ProfileId => {
-  let bestProfile: ProfileId | null = null;
-  let bestDistance = Number.POSITIVE_INFINITY;
+const EPS = 0.9;
 
-  (Object.keys(PROFILE_PROTOTYPES) as ProfileId[]).forEach((profileId) => {
-    const proto = PROFILE_PROTOTYPES[profileId];
-    const distance = l2Distance(score, proto);
+export const chooseProfile = (scoreRaw: ScoreVector, sessionId: string): ProfileId => {
+  const profileIds = Object.keys(PROFILE_PROTOTYPES) as ProfileId[];
 
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      bestProfile = profileId;
-    } else if (distance === bestDistance && bestProfile) {
-      const currentGovernance = Math.abs(
-        PROFILE_PROTOTYPES[bestProfile].governance
-      );
-      const candidateGovernance = Math.abs(proto.governance);
-      if (candidateGovernance > currentGovernance) {
-        bestProfile = profileId;
-      }
-    }
-  });
+  const distances = profileIds
+    .map((id) => ({ id, d: l2Distance(scoreRaw, PROFILE_PROTOTYPES[id]) }))
+    .sort((a, b) => a.d - b.d);
 
-  // Fallback, should not happen
-  return bestProfile ?? "IDENTITY_ARCHITECT";
+  const best = distances[0]?.d ?? Number.POSITIVE_INFINITY;
+  const candidates = distances.filter((x) => x.d - best <= EPS);
+
+  if (candidates.length <= 1) {
+    return (candidates[0]?.id ?? profileIds[0]) as ProfileId;
+  }
+
+  const idx = stableHash(sessionId) % candidates.length;
+  return candidates[idx].id;
+};
+
+const stableHash = (input: string): number => {
+  // FNV-1a 32-bit
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
 };
 
 const l2Distance = (a: ScoreVector, b: ScoreVector): number => {
@@ -147,10 +154,10 @@ const l2Distance = (a: ScoreVector, b: ScoreVector): number => {
   return Math.sqrt(dt * dt + dp * dp + dg * dg + dr * dr);
 };
 
-export const computeResult = (answers: Answer[]): SessionResult => {
-  const score = recomputeScore(answers);
-  const profileId = chooseProfile(score);
-  const trait = computeTrait(score);
-  return { profileId, trait, score };
+export const computeResult = (answers: Answer[], sessionId: string): SessionResult => {
+  const scoreRaw = recomputeScore(answers);
+  const profileId = chooseProfile(scoreRaw, sessionId);
+  const trait = computeTrait(normalizeScoreForUi(scoreRaw));
+  return { profileId, trait, score: scoreRaw };
 };
 

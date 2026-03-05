@@ -27,6 +27,11 @@ const paletteByKey: Record<
     primary: "#4B4AD7",
     secondary: "#EBEBFF",
     accent: "#A0A0FF"
+  },
+  copilot: {
+    primary: "#6B4AD7",
+    secondary: "#F3ECFF",
+    accent: "#C5A5FF"
   }
 };
 

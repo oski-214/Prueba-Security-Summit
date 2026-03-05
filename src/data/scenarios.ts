@@ -19,209 +19,126 @@ export type Scenario = {
 export const SCENARIOS: Scenario[] = [
   {
     scenario_id: "S1",
-    title: "Señales en cuentas privilegiadas",
+    title: "Señal temprana en tu entorno",
     context:
-      "Se detecta actividad anómala en identidades con privilegios. No hay impacto confirmado y el equipo pide dirección.",
+      "Aparece una señal temprana de posible actividad maliciosa. Aún no sabes si hay impacto real.",
     question: "¿Qué haces primero?",
     options: [
       {
         option_id: "A",
         label:
-          "Reducir privilegios y endurecer accesos de inmediato, aunque afecte operación.",
+          "Correlacionar señales y confirmar alcance antes de intervenir.",
         weights: {
-          tech_depth: 1,
-          posture: 2,
-          governance: 1,
+          tech_depth: 2,
+          posture: 0,
+          governance: 0,
           risk_style: 1
         }
       },
       {
         option_id: "B",
         label:
-          "Activar responsables clave y evaluar implicaciones antes de tocar sistemas.",
+          "Revisar identidades críticas y endurecer accesos de forma reversible.",
         weights: {
-          tech_depth: -1,
-          posture: 0,
-          governance: 2,
-          risk_style: -1
+          tech_depth: 1,
+          posture: 1,
+          governance: 1,
+          risk_style: 0
         }
       },
       {
         option_id: "C",
         label:
-          "Analizar telemetría y validar alcance antes de intervenir.",
+          "Contener de inmediato para limitar impacto aunque haya fricción.",
         weights: {
-          tech_depth: 2,
+          tech_depth: 1,
           posture: 1,
-          governance: 0,
-          risk_style: 0
+          governance: 1,
+          risk_style: 3
         }
       }
     ]
   },
   {
     scenario_id: "S2",
-    title: "Proveedor estratégico comprometido",
+    title: "Riesgo de datos y cumplimiento",
     context:
-      "Un proveedor estratégico sufre ransomware. No tienes evidencia clara de impacto directo en tu entorno.",
+      "Surge una preocupación por exposición de información sensible y exigencias de cumplimiento. No hay incidente confirmado.",
     question: "¿Qué haces primero?",
     options: [
       {
         option_id: "A",
-        label: "Aislar conexiones preventivamente, asumiendo impacto potencial.",
+        label:
+          "Clasificar datos críticos, revisar accesos y aplicar controles de gobierno.",
         weights: {
-          tech_depth: 1,
-          posture: 2,
-          governance: 1,
-          risk_style: -1
+          tech_depth: -1,
+          posture: 0,
+          governance: 2,
+          risk_style: 1
         }
       },
       {
         option_id: "B",
         label:
-          "Esperar evidencia más concreta antes de interrumpir operaciones clave.",
+          "Pedir a un asistente de seguridad que sintetice el riesgo y proponga un plan accionable.",
         weights: {
-          tech_depth: 1,
+          tech_depth: -2,
           posture: 0,
-          governance: 0,
-          risk_style: 2
+          governance: 1,
+          risk_style: -1
         }
       },
       {
         option_id: "C",
         label:
-          "Activar comité de crisis y coordinar comunicación con negocio y proveedor.",
+          "Ajustar detección y respuesta por si aparece evidencia de exfiltración.",
         weights: {
-          tech_depth: -1,
+          tech_depth: 1,
           posture: 1,
-          governance: 2,
-          risk_style: 0
+          governance: 1,
+          risk_style: 2
         }
       }
     ]
   },
   {
     scenario_id: "S3",
-    title: "Inversión anual limitada",
+    title: "Modelo operativo (decisión en 60 minutos)",
     context:
-      "Este año solo puedes priorizar una gran línea estratégica en seguridad. El resto solo recibirá mantenimiento mínimo.",
+      "Tienes 60 minutos para presentar una decisión clara: qué priorizar primero mientras el equipo investiga.",
     question: "¿Qué haces primero?",
     options: [
       {
         option_id: "A",
         label:
-          "Reforzar arquitectura e identidad estructural para reducir superficie de ataque.",
+          "Mejorar calidad de señal: unificar telemetría y reglas de correlación para decidir con evidencia.",
         weights: {
-          tech_depth: 1,
-          posture: 2,
-          governance: 1,
+          tech_depth: 2,
+          posture: 0,
+          governance: 0,
           risk_style: 1
         }
       },
       {
         option_id: "B",
         label:
-          "Mejorar capacidades de correlación y análisis avanzado para ganar visibilidad.",
-        weights: {
-          tech_depth: 2,
-          posture: 1,
-          governance: 0,
-          risk_style: 1
-        }
-      },
-      {
-        option_id: "C",
-        label:
-          "Fortalecer resiliencia y recuperación operativa ante incidentes graves.",
-        weights: {
-          tech_depth: 0,
-          posture: 1,
-          governance: 1,
-          risk_style: -2
-        }
-      }
-    ]
-  },
-  {
-    scenario_id: "S4",
-    title: "Autonomía de unidades de negocio",
-    context:
-      "Las unidades de negocio piden poder decidir más sobre controles de seguridad que aplican a sus equipos y aplicaciones.",
-    question: "¿Qué haces primero?",
-    options: [
-      {
-        option_id: "A",
-        label:
-          "Definir estándares centrales obligatorios y supervisión continua desde seguridad.",
+          "Estandarizar controles de identidad y acceso entre equipos para reducir variabilidad de riesgo.",
         weights: {
           tech_depth: 0,
           posture: 1,
           governance: 2,
-          risk_style: 1
+          risk_style: 0
         }
       },
       {
-        option_id: "B",
+        option_id: "C",
         label:
-          "Permitir que cada unidad defina sus controles, con solo principios generales comunes.",
+          "Usar un copiloto para resumir hallazgos, recomendar acciones y preparar comunicación interna.",
         weights: {
-          tech_depth: 0,
+          tech_depth: -2,
           posture: 0,
-          governance: -2,
+          governance: 1,
           risk_style: -1
-        }
-      },
-      {
-        option_id: "C",
-        label:
-          "Diseñar un modelo híbrido con métricas formales de riesgo por unidad.",
-        weights: {
-          tech_depth: -1,
-          posture: 1,
-          governance: 1,
-          risk_style: 1
-        }
-      }
-    ]
-  },
-  {
-    scenario_id: "S5",
-    title: "Incidente contenido sin impacto material",
-    context:
-      "Has gestionado un incidente que quedó contenido y sin impacto material aparente. No hay obligación regulatoria clara de comunicar.",
-    question: "¿Qué haces primero?",
-    options: [
-      {
-        option_id: "A",
-        label:
-          "Cerrar internamente el incidente sin comunicarlo externamente.",
-        weights: {
-          tech_depth: 0,
-          posture: 0,
-          governance: 1,
-          risk_style: -2
-        }
-      },
-      {
-        option_id: "B",
-        label:
-          "Comunicar de forma transparente a socios clave el incidente y lecciones aprendidas.",
-        weights: {
-          tech_depth: -1,
-          posture: 1,
-          governance: 1,
-          risk_style: 2
-        }
-      },
-      {
-        option_id: "C",
-        label:
-          "Esperar al análisis técnico completo y decidir después si comunicar.",
-        weights: {
-          tech_depth: 2,
-          posture: 1,
-          governance: 0,
-          risk_style: 1
         }
       }
     ]

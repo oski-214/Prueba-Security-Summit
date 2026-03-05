@@ -1,8 +1,9 @@
 export type ProfileId =
-  | "IDENTITY_ARCHITECT"
-  | "SIGNAL_ORCHESTRATOR"
-  | "TOTAL_GUARDIAN"
-  | "TRUST_STRATEGIST";
+  | "DEFENDER_CHAMPION"
+  | "SENTINEL_ORCHESTRATOR"
+  | "ENTRA_IDENTITY_ARCHITECT"
+  | "PURVIEW_TRUST_STEWARD"
+  | "COPILOT_NAVIGATOR";
 
 export type ScoreVector = {
   tech_depth: number;
@@ -15,7 +16,7 @@ export type Profile = {
   profile_id: ProfileId;
   name: string;
   product_anchor: string;
-  avatar_style_key: "entra" | "sentinel" | "defender" | "purview";
+  avatar_style_key: "entra" | "sentinel" | "defender" | "purview" | "copilot";
   summary_template: string;
   strength_template: string;
   blindspot_template: string;
@@ -24,20 +25,21 @@ export type Profile = {
 
 export const PROFILES: Profile[] = [
   {
-    profile_id: "IDENTITY_ARCHITECT",
-    name: "Arquitecto de Identidad",
-    product_anchor: "Microsoft Entra",
-    avatar_style_key: "entra",
+    profile_id: "DEFENDER_CHAMPION",
+    name: "Champion de Contención",
+    product_anchor: "Microsoft Defender XDR",
+    avatar_style_key: "defender",
     summary_template:
-      "Tiendes a reducir superficie de ataque antes que negociar excepciones. Prefieres controles consistentes y decisiones estructurales que disminuyan exposición a largo plazo.",
-    strength_template: "Conviertes complejidad en reglas claras y sostenibles.",
+      "Tiendes a priorizar contención rápida y continuidad operativa. Buscas frenar la propagación y mantener el negocio en marcha incluso bajo presión.",
+    strength_template:
+      "Eres eficaz reduciendo impacto inmediato y coordinando la respuesta.",
     blindspot_template:
-      "Puedes generar fricción operativa si no equilibras agilidad y control.",
+      "Puedes dejar riesgos estructurales para más adelante si no afectan al corto plazo.",
     challenge_template:
-      "¿Tienes métricas periódicas sobre privilegios, identidades críticas y excepciones activas?"
+      "¿Tienes un momento concreto en el año para revisar riesgos que has aceptado durante incidentes anteriores?"
   },
   {
-    profile_id: "SIGNAL_ORCHESTRATOR",
+    profile_id: "SENTINEL_ORCHESTRATOR",
     name: "Orquestador de Señales",
     product_anchor: "Microsoft Sentinel",
     avatar_style_key: "sentinel",
@@ -51,58 +53,79 @@ export const PROFILES: Profile[] = [
       "¿Tu organización mide tiempo desde señal temprana hasta decisión ejecutiva?"
   },
   {
-    profile_id: "TOTAL_GUARDIAN",
-    name: "Guardián Integral",
-    product_anchor: "Microsoft Defender XDR",
-    avatar_style_key: "defender",
+    profile_id: "ENTRA_IDENTITY_ARCHITECT",
+    name: "Arquitecto de Identidad",
+    product_anchor: "Microsoft Entra",
+    avatar_style_key: "entra",
     summary_template:
-      "Priorizas continuidad operativa y capacidad de respuesta coordinada. Buscas contener impacto sin paralizar el negocio.",
-    strength_template: "Mantienes estabilidad incluso bajo presión.",
+      "En tu enfoque la identidad y el control de acceso son el punto de partida. Prefieres decisiones estructurales que reduzcan superficie de ataque de forma consistente.",
+    strength_template:
+      "Alineas controles de acceso con el modelo de negocio y las funciones críticas.",
     blindspot_template:
-      "Puedes aceptar riesgos estructurales si no afectan de inmediato la operación.",
+      "Puedes generar fricción si los cambios en identidad no se coordinan bien con los equipos de negocio.",
     challenge_template:
-      "¿Tus planes de resiliencia están probados en escenarios interdependientes reales?"
+      "¿Tienes visibilidad clara de identidades privilegiadas, cuentas huérfanas y excepciones temporales?"
   },
   {
-    profile_id: "TRUST_STRATEGIST",
-    name: "Estratega de Confianza",
+    profile_id: "PURVIEW_TRUST_STEWARD",
+    name: "Responsable de Confianza",
     product_anchor: "Microsoft Purview",
     avatar_style_key: "purview",
     summary_template:
-      "Enfocas la seguridad como elemento de gobierno y confianza organizativa. Alineas riesgo, cumplimiento y dirección ejecutiva.",
+      "Lees la seguridad desde el prisma de datos, cumplimiento y confianza. Buscas coherencia entre regulación, políticas internas y expectativas de los grupos de interés.",
     strength_template:
       "Generas coherencia y legitimidad en decisiones críticas.",
     blindspot_template:
       "El exceso de proceso puede ralentizar ejecución técnica.",
     challenge_template:
       "¿Tus métricas de riesgo están conectadas con decisiones reales del comité?"
+  },
+  {
+    profile_id: "COPILOT_NAVIGATOR",
+    name: "Navegador Asistido",
+    product_anchor: "Microsoft Security Copilot",
+    avatar_style_key: "copilot",
+    summary_template:
+      "Tiendes a apoyarte en asistentes y síntesis inteligentes para tomar decisiones. Buscas contexto rápido, recomendaciones accionables y comunicación clara hacia negocio.",
+    strength_template:
+      "Aceleras el entendimiento de situaciones complejas y facilitas la toma de decisiones conjunta.",
+    blindspot_template:
+      "Puedes depender demasiado de la recomendación inicial si no contrastas con tus propios criterios.",
+    challenge_template:
+      "¿Tienes claro en qué decisiones quieres apoyo automatizado y en cuáles necesitas deliberación más profunda?"
   }
 ];
 
 export const PROFILE_PROTOTYPES: Record<ProfileId, ScoreVector> = {
-  IDENTITY_ARCHITECT: {
+  DEFENDER_CHAMPION: {
+    tech_depth: 1,
+    posture: 1,
+    governance: 1,
+    risk_style: 6
+  },
+  SENTINEL_ORCHESTRATOR: {
+    tech_depth: 4,
+    posture: 0,
+    governance: 0,
+    risk_style: 2
+  },
+  ENTRA_IDENTITY_ARCHITECT: {
     tech_depth: 1,
     posture: 2,
-    governance: 1,
-    risk_style: 1
-  },
-  SIGNAL_ORCHESTRATOR: {
-    tech_depth: 2,
-    posture: 1,
-    governance: 0,
-    risk_style: 1
-  },
-  TOTAL_GUARDIAN: {
-    tech_depth: 1,
-    posture: 1,
-    governance: 1,
-    risk_style: -2
-  },
-  TRUST_STRATEGIST: {
-    tech_depth: -1,
-    posture: 1,
-    governance: 2,
+    governance: 3,
     risk_style: 0
+  },
+  PURVIEW_TRUST_STEWARD: {
+    tech_depth: -1,
+    posture: 0,
+    governance: 2,
+    risk_style: 1
+  },
+  COPILOT_NAVIGATOR: {
+    tech_depth: -4,
+    posture: 0,
+    governance: 2,
+    risk_style: -2
   }
 };
 
