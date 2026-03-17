@@ -12,6 +12,7 @@
 import type { Profile } from "./data/profiles";
 import { getAvatarUrl, getBannerUrl } from "./data/avatarImages";
 import orbImage from "./data/background/orb.png";
+import msSecurityLogoSrc from "./data/background/Microsoft-Security-logo-horiz-c-gray-rgb.png";
 
 const COLORS = {
   bgGradientStart: "#1b1b3a",
@@ -142,7 +143,7 @@ export async function generateProfileImage(
   ctx.font = `22px ${FONT}`;
   const summaryLines = wrapText(ctx, profile.summary_template, textAreaW);
   const strengthLines = wrapText(ctx, profile.strength_template, textAreaW);
-  const blindspotLines = wrapText(ctx, profile.blindspot_template, textAreaW);
+  const blindspotLines: string[] = []; // Removed from display
   const challengeLines = wrapText(ctx, profile.challenge_template, textAreaW);
 
   // Calculate needed height
@@ -230,11 +231,10 @@ export async function generateProfileImage(
   const maxTW = textAreaW;
   let y = panelY + 44;
 
-  // Microsoft logo + "Microsoft Security"
-  drawMsLogo(ctx, tX, y, 28);
+  // Microsoft Security Summit Madrid 2026 header (text only)
   ctx.fillStyle = COLORS.text;
-  ctx.font = `600 24px ${FONT}`;
-  ctx.fillText("Microsoft Security", tX + 40, y + 20);
+  ctx.font = `600 22px ${FONT}`;
+  ctx.fillText("Microsoft Security Summit Madrid 2026", tX, y + 22);
   y += 50;
 
   // Thin separator
@@ -244,7 +244,7 @@ export async function generateProfileImage(
   ctx.moveTo(tX, y);
   ctx.lineTo(tX + maxTW, y);
   ctx.stroke();
-  y += 26;
+  y += 40;
 
   // Title: "Name, tu perfil"
   ctx.fillStyle = COLORS.text;
@@ -284,8 +284,7 @@ export async function generateProfileImage(
   };
 
   drawSmallSection("Fortaleza", strengthLines);
-  drawSmallSection("Punto ciego potencial", blindspotLines);
-  drawSmallSection("Reto", challengeLines);
+  drawSmallSection("Tu superpoder", challengeLines);
 
   // Trait
   if (trait) {

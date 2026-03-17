@@ -17,6 +17,7 @@ import maleAvatar from "./data/maleAvatars/male_avatar.png";
 import maleAvatarSelected from "./data/maleAvatars/male_avatar_selected.png";
 import femaleAvatar from "./data/femaleAvatars/female_avatar.png";
 import femaleAvatarSelected from "./data/femaleAvatars/female_avatar_selected.png";
+import msSecurityLogo from "./data/background/Microsoft-Security-logo-horiz-c-gray-rgb.png";
 import QRCode from "qrcode";
 
 const STORAGE_KEY = "security-profile-session";
@@ -342,16 +343,11 @@ export const App: React.FC = () => {
       <main className="shell">
         {/* Microsoft-branded header for Security Summit */}
         <header className="app-header">
-          <div className="app-brand">
-            {/* Microsoft four-square logo */}
-            <svg className="ms-logo" viewBox="0 0 21 21" aria-hidden="true">
-              <rect x="0" y="0" width="10" height="10" fill="#f25022" />
-              <rect x="11" y="0" width="10" height="10" fill="#7fba00" />
-              <rect x="0" y="11" width="10" height="10" fill="#00a4ef" />
-              <rect x="11" y="11" width="10" height="10" fill="#ffb900" />
-            </svg>
-            <span className="brand-title">Security Summit</span>
-          </div>
+          <img
+            src={msSecurityLogo}
+            alt="Microsoft Security"
+            className="header-logo"
+          />
           <div className="app-subtitle">
             3 preguntas de seguridad. 1 minuto.
           </div>

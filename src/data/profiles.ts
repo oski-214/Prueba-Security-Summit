@@ -36,7 +36,7 @@ export const PROFILES: Profile[] = [
     blindspot_template:
       "Puedes dejar riesgos estructurales para más adelante si no afectan al corto plazo.",
     challenge_template:
-      "¿Tienes un momento concreto en el año para revisar riesgos que has aceptado durante incidentes anteriores?"
+      "Esa velocidad de contención que te define, combinada con la coordinación de Defender XDR, convierte cada amenaza en una oportunidad para blindar el negocio."
   },
   {
     profile_id: "SENTINEL_ORCHESTRATOR",
@@ -50,7 +50,7 @@ export const PROFILES: Profile[] = [
     blindspot_template:
       "Esperar demasiada certeza puede retrasar acciones necesarias.",
     challenge_template:
-      "¿Tu organización mide tiempo desde señal temprana hasta decisión ejecutiva?"
+      "Tu capacidad de decidir con evidencia eleva toda la operación. Con Sentinel, cada señal que correlacionas se convierte en precisión que otros equipos no pueden igualar."
   },
   {
     profile_id: "ENTRA_IDENTITY_ARCHITECT",
@@ -64,7 +64,7 @@ export const PROFILES: Profile[] = [
     blindspot_template:
       "Puedes generar fricción si los cambios en identidad no se coordinan bien con los equipos de negocio.",
     challenge_template:
-      "¿Tienes visibilidad clara de identidades privilegiadas, cuentas huérfanas y excepciones temporales?"
+      "Al alinear acceso con negocio, reduces superficie de ataque sin que nadie lo note. Con Entra, esas decisiones estructurales se convierten en la base de toda la estrategia Zero Trust."
   },
   {
     profile_id: "PURVIEW_TRUST_STEWARD",
@@ -78,7 +78,7 @@ export const PROFILES: Profile[] = [
     blindspot_template:
       "El exceso de proceso puede ralentizar ejecución técnica.",
     challenge_template:
-      "¿Tus métricas de riesgo están conectadas con decisiones reales del comité?"
+      "Esa coherencia que aportas entre regulación y decisión es lo que da legitimidad a toda la estrategia. Con Purview, tu visión de gobernanza escala a toda la organización."
   },
   {
     profile_id: "COPILOT_NAVIGATOR",
@@ -92,7 +92,7 @@ export const PROFILES: Profile[] = [
     blindspot_template:
       "Puedes depender demasiado de la recomendación inicial si no contrastas con tus propios criterios.",
     challenge_template:
-      "¿Tienes claro en qué decisiones quieres apoyo automatizado y en cuáles necesitas deliberación más profunda?"
+      "Tu habilidad para sintetizar situaciones complejas y facilitar decisiones conjuntas se multiplica con Security Copilot. Eres el puente entre la IA y el criterio experto."
   }
 ];
 

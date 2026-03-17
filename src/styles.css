@@ -99,24 +99,16 @@ body {
 
 /* Microsoft-branded header bar */
 .app-header {
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: 16px;
+  padding-bottom: 0;
 }
 
-.app-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  font-size: 18px;
-}
-
-/* Microsoft four-square logo */
-.ms-logo {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+/* Microsoft Security logo in header */
+.header-logo {
+  height: 24px;
+  width: auto;
+  display: block;
+  margin-bottom: 6px;
 }
 
 .brand-dot {
@@ -131,7 +123,8 @@ body {
 }
 
 .app-subtitle {
-  margin-top: 4px;
+  margin-top: -4px;
+  padding-left: 10px;
   font-size: 13px;
   color: var(--color-text-subtle);
 }
