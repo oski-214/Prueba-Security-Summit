@@ -4,23 +4,25 @@
  * Renders the user's Security Profile result as a downloadable PNG
  * using the Canvas API. Fully client-side, zero backend.
  *
- * The card is drawn with Microsoft-style colours:
- *   - White card on a soft blue-grey gradient background
- *   - #0078d4 (Microsoft Blue) accents
- *   - Segoe UI typography (falls back to system-ui)
+ * Layout: integrated horizontal card with banner/orb background,
+ * avatar on the right, and text flowing alongside.
  * ─────────────────────────────────────────────────────────────────
  */
 
 import type { Profile } from "./data/profiles";
+import { getAvatarUrl, getBannerUrl } from "./data/avatarImages";
+import orbImage from "./data/background/orb.png";
 
-/** Palette matching the app's Microsoft design system */
 const COLORS = {
-  bgGradientStart: "#b4d5f0",
-  bgGradientEnd: "#c4b8e8",
+  bgGradientStart: "#1b1b3a",
+  bgGradientEnd: "#0f2847",
   cardBg: "#ffffff",
+  cardBgAlpha: "rgba(255,255,255,0.92)",
   primary: "#0078d4",
   text: "#242424",
+  textLight: "#ffffff",
   textSubtle: "#616161",
+  textLightSubtle: "rgba(255,255,255,0.75)",
   border: "#e0e0e0",
   msRed: "#f25022",
   msGreen: "#7fba00",
@@ -30,25 +32,23 @@ const COLORS = {
 
 const FONT = '"Segoe UI", system-ui, sans-serif';
 
-// ── Canvas dimensions (optimized for mobile screens / sharing) ──
-const W = 720;       // px width
-const CARD_PAD = 40; // padding inside the white card
-const CARD_MARGIN = 40;
-const CARD_W = W - CARD_MARGIN * 2;
+const W = 1400;
+const H_MIN = 800;
 
-/**
- * Word-wrap helper: splits `text` into lines that fit within `maxWidth`
- * at the given font size on the provided canvas context.
- */
-function wrapText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number
-): string[] {
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.split(" ");
   const lines: string[] = [];
   let current = "";
-
   for (const word of words) {
     const test = current ? `${current} ${word}` : word;
     if (ctx.measureText(test).width > maxWidth) {
@@ -62,15 +62,7 @@ function wrapText(
   return lines;
 }
 
-/**
- * Draw the Microsoft four-square logo at (x, y) with given `size`.
- */
-function drawMsLogo(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number
-) {
+function drawMsLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
   const half = size / 2 - 1;
   const gap = 2;
   ctx.fillStyle = COLORS.msRed;
@@ -83,172 +75,231 @@ function drawMsLogo(
   ctx.fillRect(x + half + gap, y + half + gap, half, half);
 }
 
-/**
- * Renders a section (title + body text) and returns the new Y position.
- */
-function drawSection(
+/** Draw rounded rect path (helper) */
+function roundRect(
   ctx: CanvasRenderingContext2D,
-  title: string,
-  body: string,
-  y: number,
-  maxTextW: number
-): number {
-  // Section title
-  ctx.fillStyle = COLORS.text;
-  ctx.font = `600 15px ${FONT}`;
-  ctx.fillText(title, CARD_MARGIN + CARD_PAD, y);
-  y += 20;
-
-  // Section body (word-wrapped)
-  ctx.fillStyle = COLORS.textSubtle;
-  ctx.font = `14px ${FONT}`;
-  const lines = wrapText(ctx, body, maxTextW);
-  for (const line of lines) {
-    ctx.fillText(line, CARD_MARGIN + CARD_PAD, y);
-    y += 20;
-  }
-
-  return y + 8; // small spacing after section
+  x: number, y: number, w: number, h: number, r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 /**
- * Main export: generates a PNG data-URL of the profile card.
- * Returns a Promise that resolves to the data URL string.
+ * Main export: generates an integrated profile card PNG.
+ *
+ * Layout when banner exists:
+ * ┌─────────────────────────────────────────┐
+ * │  [Banner full background]               │
+ * │  ┌─ Semi-transparent text panel ──────┐ │
+ * │  │ MS logo  Security Summit           │ │
+ * │  │ Name, tu perfil                    │ │
+ * │  │ Profile name        [Avatar]       │ │
+ * │  │ Summary...                         │ │
+ * │  │ Fortaleza / Punto ciego / Reto     │ │
+ * │  └────────────────────────────────────┘ │
+ * └─────────────────────────────────────────┘
  */
 export async function generateProfileImage(
   profile: Profile,
   userName?: string,
-  trait?: string
+  trait?: string,
+  gender: "male" | "female" = "male"
 ): Promise<string> {
-  // ── 1. Pre-compute text to determine dynamic card height ──────
+  // Load images
+  const avatarSrc = getAvatarUrl(profile.avatar_style_key, gender);
+  const bannerSrc = getBannerUrl(profile.avatar_style_key);
+
+  let avatarImg: HTMLImageElement | null = null;
+  let bannerImg: HTMLImageElement | null = null;
+
+  try { avatarImg = await loadImage(avatarSrc); } catch { /* skip */ }
+  // Only use the banner for male — the banner image contains the male character.
+  // For female, we use the female avatar instead.
+  if (bannerSrc && gender === "male") {
+    try { bannerImg = await loadImage(bannerSrc); } catch { /* skip */ }
+  }
+
+  // ── Measure text to compute dynamic height ──────────────────
   const canvas = document.createElement("canvas");
   canvas.width = W;
-  // Temporary height; we'll resize after measuring text
-  canvas.height = 1200;
+  canvas.height = 2200;
   const ctx = canvas.getContext("2d")!;
-  const maxTextW = CARD_W - CARD_PAD * 2;
 
-  // Measure all sections to compute total height
-  ctx.font = `14px ${FONT}`;
+  const PAD = 56;
+  // Text panel takes ~60% of width, rest is for the avatar
+  const panelW = Math.round(W * 0.6);
+  const textAreaW = panelW - 76;
 
-  const summaryLines = wrapText(ctx, profile.summary_template, maxTextW);
-  const strengthLines = wrapText(ctx, profile.strength_template, maxTextW);
-  const blindspotLines = wrapText(ctx, profile.blindspot_template, maxTextW);
-  const challengeLines = wrapText(ctx, profile.challenge_template, maxTextW);
+  ctx.font = `22px ${FONT}`;
+  const summaryLines = wrapText(ctx, profile.summary_template, textAreaW);
+  const strengthLines = wrapText(ctx, profile.strength_template, textAreaW);
+  const blindspotLines = wrapText(ctx, profile.blindspot_template, textAreaW);
+  const challengeLines = wrapText(ctx, profile.challenge_template, textAreaW);
 
-  // Calculate card content height
-  let contentH = 0;
-  contentH += 60;  // top padding + MS logo + header
-  contentH += 40;  // profile name
-  contentH += 10;  // spacing
-  contentH += summaryLines.length * 20 + 16;  // summary
-  contentH += 28 + strengthLines.length * 20 + 8;   // strength section
-  contentH += 28 + blindspotLines.length * 20 + 8;  // blindspot section
-  contentH += 28 + challengeLines.length * 20 + 8;  // challenge section
-  if (trait) contentH += 28; // trait line
-  contentH += 50;  // product anchor + bottom padding
-  contentH += 40;  // footer
+  // Calculate needed height
+  let textH = 0;
+  textH += 56;  // header (logo + Microsoft Security)
+  textH += 44;  // separator + spacing
+  textH += 46;  // "Name, tu perfil"
+  textH += 44;  // profile name
+  textH += 12;  // gap
+  textH += summaryLines.length * 30 + 20;
+  textH += 34 + strengthLines.length * 28 + 10;
+  textH += 34 + blindspotLines.length * 28 + 10;
+  textH += 34 + challengeLines.length * 28 + 10;
+  if (trait) textH += 36;
+  textH += 36; // product anchor
+  textH += 24; // bottom pad
 
-  const CARD_H = contentH;
-  const H = CARD_MARGIN * 2 + CARD_H;
-
-  // Resize canvas to final dimensions
+  const H = Math.max(H_MIN, textH + PAD * 2);
   canvas.height = H;
 
-  // ── 2. Draw background gradient ──────────────────────────────
+  // ── 1. Background: same gradient as the app page ────────────
   const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-  bgGrad.addColorStop(0, COLORS.bgGradientStart);
-  bgGrad.addColorStop(1, COLORS.bgGradientEnd);
+  bgGrad.addColorStop(0, "#b4d5f0");
+  bgGrad.addColorStop(0.2, "#c9daea");
+  bgGrad.addColorStop(0.45, "#dde5ef");
+  bgGrad.addColorStop(0.65, "#d5dced");
+  bgGrad.addColorStop(0.85, "#bfc8e6");
+  bgGrad.addColorStop(1, "#c4b8e8");
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  // ── 3. Draw white card with rounded corners ──────────────────
-  const cardX = CARD_MARGIN;
-  const cardY = CARD_MARGIN;
-  const r = 16; // border-radius
+  // ── 1a. Banner or avatar on the RIGHT ───────────────────────
+  if (bannerImg) {
+    // Wide banner image (e.g. copilot background) — draw full
+    const imgAspect = bannerImg.width / bannerImg.height;
+    const drawH = H;
+    const drawW = drawH * imgAspect;
+    const drawX = W - drawW;
+    ctx.drawImage(bannerImg, drawX, 0, drawW, drawH);
 
-  ctx.beginPath();
-  ctx.moveTo(cardX + r, cardY);
-  ctx.lineTo(cardX + CARD_W - r, cardY);
-  ctx.quadraticCurveTo(cardX + CARD_W, cardY, cardX + CARD_W, cardY + r);
-  ctx.lineTo(cardX + CARD_W, cardY + CARD_H - r);
-  ctx.quadraticCurveTo(cardX + CARD_W, cardY + CARD_H, cardX + CARD_W - r, cardY + CARD_H);
-  ctx.lineTo(cardX + r, cardY + CARD_H);
-  ctx.quadraticCurveTo(cardX, cardY + CARD_H, cardX, cardY + CARD_H - r);
-  ctx.lineTo(cardX, cardY + r);
-  ctx.quadraticCurveTo(cardX, cardY, cardX + r, cardY);
-  ctx.closePath();
+    const fadeGrad = ctx.createLinearGradient(W * 0.35, 0, W * 0.65, 0);
+    fadeGrad.addColorStop(0, "rgba(255, 255, 255, 1)");
+    fadeGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = fadeGrad;
+    ctx.fillRect(0, 0, W * 0.65, H);
+  } else if (avatarImg) {
+    // Avatar image — draw large on the right, preserving aspect ratio
+    const imgAspect = avatarImg.width / avatarImg.height;
+    const drawH = gender === "female" ? H * 1.02 : H * 1.08;
+    const drawW = drawH * imgAspect;
+    // Female avatars need more offset to the right (different image proportions)
+    const offsetX = gender === "female" ? 230 : 100;
+    const avatarX = W - drawW + offsetX;
+    const avatarY = H - drawH + 10;
+    ctx.drawImage(avatarImg, avatarX, avatarY, drawW, drawH);
+  }
 
-  ctx.fillStyle = COLORS.cardBg;
+  // ── 1b. Orb image on the LEFT (behind the panel) ───────────
+  try {
+    const orbImg = await loadImage(orbImage);
+    const orbSize = H * 0.7;
+    const orbX = -orbSize * 0.25;
+    const orbY = (H - orbSize) / 2;
+    ctx.drawImage(orbImg, orbX, orbY, orbSize, orbSize);
+  } catch {
+    // Orb fails to load — skip
+  }
+
+  // ── 2. Semi-transparent text panel on the left ──────────────
+  const panelX = PAD;
+  const panelY = PAD;
+  const panelH = H - PAD * 2;
+
+  ctx.save();
+  roundRect(ctx, panelX, panelY, panelW, panelH, 20);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
   ctx.fill();
-
-  // Subtle border
-  ctx.strokeStyle = COLORS.border;
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
+  ctx.lineWidth = 1.5;
   ctx.stroke();
+  ctx.restore();
 
-  // ── 4. Card content ──────────────────────────────────────────
-  let y = cardY + CARD_PAD;
-  const textX = cardX + CARD_PAD;
+  // ── 3. Text content inside the panel ────────────────────────
+  const tX = panelX + 38;
+  const maxTW = textAreaW;
+  let y = panelY + 44;
 
-  // Microsoft logo + "Security Summit" header
-  drawMsLogo(ctx, textX, y, 20);
+  // Microsoft logo + "Microsoft Security"
+  drawMsLogo(ctx, tX, y, 28);
   ctx.fillStyle = COLORS.text;
-  ctx.font = `600 16px ${FONT}`;
-  ctx.fillText("Security Summit", textX + 28, y + 15);
+  ctx.font = `600 24px ${FONT}`;
+  ctx.fillText("Microsoft Security", tX + 40, y + 20);
+  y += 50;
+
+  // Thin separator
+  ctx.strokeStyle = COLORS.border;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(tX, y);
+  ctx.lineTo(tX + maxTW, y);
+  ctx.stroke();
+  y += 26;
+
+  // Title: "Name, tu perfil"
+  ctx.fillStyle = COLORS.text;
+  ctx.font = `600 32px ${FONT}`;
+  const titleText = userName ? `${userName}, tu perfil` : "Tu perfil";
+  ctx.fillText(titleText, tX, y + 4);
+  y += 44;
+
+  // Profile name in blue
+  ctx.fillStyle = COLORS.primary;
+  ctx.font = `700 28px ${FONT}`;
+  ctx.fillText(profile.name, tX, y);
   y += 40;
 
-  // Thin separator line under header
-  ctx.strokeStyle = COLORS.border;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(textX, y);
-  ctx.lineTo(cardX + CARD_W - CARD_PAD, y);
-  ctx.stroke();
-  y += 20;
-
-  // Profile title (user name + "tu perfil" or just "Tu perfil")
-  ctx.fillStyle = COLORS.text;
-  ctx.font = `600 22px ${FONT}`;
-  const titleText = userName
-    ? `${userName}, tu perfil`
-    : "Tu perfil";
-  ctx.fillText(titleText, textX, y);
-  y += 32;
-
-  // Profile name in Microsoft Blue
-  ctx.fillStyle = COLORS.primary;
-  ctx.font = `700 20px ${FONT}`;
-  ctx.fillText(profile.name, textX, y);
-  y += 28;
-
-  // Summary text
+  // Summary
   ctx.fillStyle = COLORS.textSubtle;
-  ctx.font = `14px ${FONT}`;
+  ctx.font = `20px ${FONT}`;
   for (const line of summaryLines) {
-    ctx.fillText(line, textX, y);
-    y += 20;
+    ctx.fillText(line, tX, y);
+    y += 28;
   }
   y += 12;
 
-  // Sections: Fortaleza, Punto ciego, Reto
-  y = drawSection(ctx, "Fortaleza", profile.strength_template, y, maxTextW);
-  y = drawSection(ctx, "Punto ciego potencial", profile.blindspot_template, y, maxTextW);
-  y = drawSection(ctx, "Reto", profile.challenge_template, y, maxTextW);
+  // Sections
+  const drawSmallSection = (title: string, lines: string[]) => {
+    ctx.fillStyle = COLORS.text;
+    ctx.font = `600 20px ${FONT}`;
+    ctx.fillText(title, tX, y);
+    y += 28;
+    ctx.fillStyle = COLORS.textSubtle;
+    ctx.font = `18px ${FONT}`;
+    for (const line of lines) {
+      ctx.fillText(line, tX, y);
+      y += 26;
+    }
+    y += 6;
+  };
 
-  // Trait line (if present)
+  drawSmallSection("Fortaleza", strengthLines);
+  drawSmallSection("Punto ciego potencial", blindspotLines);
+  drawSmallSection("Reto", challengeLines);
+
+  // Trait
   if (trait) {
     ctx.fillStyle = COLORS.textSubtle;
-    ctx.font = `italic 13px ${FONT}`;
-    ctx.fillText(trait, textX, y);
-    y += 24;
+    ctx.font = `italic 18px ${FONT}`;
+    ctx.fillText(trait, tX, y);
+    y += 30;
   }
 
-  // Product anchor footer
+  // Product anchor
   ctx.fillStyle = COLORS.textSubtle;
-  ctx.font = `12px ${FONT}`;
-  ctx.fillText(`Capacidades representadas: ${profile.product_anchor}`, textX, y);
+  ctx.font = `16px ${FONT}`;
+  ctx.fillText(`Capacidades representadas: ${profile.product_anchor}`, tX, y);
 
-  // ── 5. Export as PNG data URL ────────────────────────────────
-  return canvas.toDataURL("image/png");
+  // ── 5. Export as JPEG ──────────────────────────────────────
+  return canvas.toDataURL("image/jpeg", 0.92);
 }

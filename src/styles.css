@@ -16,7 +16,7 @@
   --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
   --radius-card: 12px;
   --radius-pill: 999px;
-  --transition-fast: 150ms ease-out;
+  --transition-fast: 200ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 *,
@@ -93,7 +93,7 @@ body {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 440px;
+  max-width: 750px;
   margin: auto;
 }
 
@@ -138,28 +138,36 @@ body {
 
 .screen-container {
   position: relative;
+  transition: opacity 250ms cubic-bezier(0.33, 1, 0.68, 1),
+              transform 250ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Exit animation: fade out + slide up when transitioning between steps */
+.screen-container.screen-exiting {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.97);
 }
 
 .screen {
   opacity: 0;
-  transform: translateY(8px);
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  transform: translateY(16px) scale(0.98);
+  transition: opacity 300ms cubic-bezier(0.33, 1, 0.68, 1),
+              transform 300ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .screen-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 .card {
   background-color: var(--color-surface);
   border-radius: var(--radius-card);
-  padding: 24px 20px 20px;
+  padding: 28px 28px 24px;
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--color-border-subtle);
-  /* Allow internal scroll if content is tall, but page itself stays locked */
-  max-height: calc(100vh - 120px);
-  max-height: calc(100dvh - 120px);
+  max-height: calc(100vh - 100px);
+  max-height: calc(100dvh - 100px);
   overflow-y: auto;
   touch-action: pan-y;
 }
@@ -173,16 +181,16 @@ body {
 }
 
 .screen-title {
-  margin: 4px 0 8px;
-  font-size: 22px;
+  margin: 6px 0 10px;
+  font-size: 26px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .screen-body {
-  margin-top: 4px;
-  font-size: 14px;
-  line-height: 1.5;
+  margin-top: 6px;
+  font-size: 16px;
+  line-height: 1.55;
   color: var(--color-text-subtle);
 }
 
@@ -228,17 +236,17 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border-radius: 999px;
   border: 1px solid transparent;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color var(--transition-fast), color var(--transition-fast),
     box-shadow var(--transition-fast), transform var(--transition-fast),
     border-color var(--transition-fast);
-  min-height: 40px;
-  min-width: 96px;
+  min-height: 46px;
+  min-width: 110px;
 }
 
 .btn-primary {
@@ -300,7 +308,7 @@ body {
   bottom: 0;
   border-radius: inherit;
   background: var(--color-primary);
-  transition: width var(--transition-fast);
+  transition: width 400ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .options-grid {
@@ -320,8 +328,8 @@ body {
   border: 1px solid rgba(0, 120, 212, 0.1);
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast),
-    box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition: background-color 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease, transform 200ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .option-card:hover {
@@ -335,7 +343,8 @@ body {
 .option-card-selected {
   background-color: #cce4f7;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+  transform: scale(1.02);
 }
 
 .option-badge {
@@ -360,7 +369,7 @@ body {
 }
 
 .option-label {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text);
 }
 
@@ -373,15 +382,45 @@ body {
 }
 
 .avatar-card {
-  margin: 12px auto 8px;
-  width: 120px;
-  height: 120px;
+  margin: 16px auto 12px;
+  width: 160px;
+  height: 160px;
 }
 
-.avatar-svg {
+.avatar-img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
   display: block;
+  border-radius: 16px;
+}
+
+/* ── Result card with banner ─────────────────────────────────── */
+.card-result {
+  padding-top: 0;
+  overflow: hidden;
+}
+
+.result-banner {
+  margin: 0 -20px;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.result-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+@media (min-width: 480px) {
+  .card-result {
+    padding-top: 0;
+  }
+  .result-banner {
+    margin: 0 -24px;
+  }
 }
 
 .profile-name {
@@ -445,6 +484,107 @@ body {
   color: var(--color-text-subtle);
 }
 
+/* ── Avatar selector (name step) ─────────────────────────────── */
+.card-name {
+  padding-top: 0 !important;
+  overflow: hidden;
+}
+
+.name-section {
+  padding: 0 4px;
+}
+
+.avatar-selector {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin: 0 -20px; /* bleed to card edges */
+  overflow: hidden;
+  height: 300px;
+}
+
+.avatar-selector-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--color-surface));
+  pointer-events: none;
+  z-index: 10; /* Must stay above selected avatars (z-index: 3) */
+}
+
+.avatar-pick {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.33, 1, 0.68, 1),
+             filter 0.35s ease,
+             opacity 0.35s ease;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.avatar-pick-img {
+  width: 100%;
+  height: 300px;
+  object-fit: contain;
+  object-position: bottom center;
+  display: block;
+  transition: transform 0.35s cubic-bezier(0.33, 1, 0.68, 1),
+             filter 0.35s ease;
+}
+
+/* Hover: enlarge and brighten */
+.avatar-pick:hover .avatar-pick-img {
+  transform: scale(1.08);
+  filter: brightness(1.1);
+}
+
+/* Selected state: larger, fully bright */
+.avatar-pick-selected {
+  z-index: 3;
+}
+
+.avatar-pick-selected .avatar-pick-img {
+  transform: scale(1.1);
+  filter: brightness(1.05) drop-shadow(0 4px 16px rgba(0, 120, 212, 0.25));
+}
+
+/* Dimmed state: fade out the unselected avatar */
+.avatar-pick-dimmed {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+}
+
+.avatar-pick-dimmed:hover {
+  opacity: 0.75;
+  filter: grayscale(0);
+}
+
+/* Compensate shift in female selected image */
+.avatar-pick-female.avatar-pick-selected .avatar-pick-img,
+.avatar-pick-female:hover .avatar-pick-img {
+  object-position: bottom 40%;
+}
+
+@media (min-width: 480px) {
+  .avatar-selector {
+    height: 340px;
+    margin: 0 -24px;
+  }
+  .avatar-pick-img {
+    height: 340px;
+  }
+}
+
 .loader {
   width: 40px;
   height: 40px;
@@ -467,7 +607,7 @@ body {
 
 @media (min-width: 480px) {
   .card {
-    padding: 28px 24px 24px;
+    padding: 32px 32px 28px;
   }
 }
 

@@ -36,19 +36,20 @@ function parseShareParams(): {
   profileId: ProfileId;
   userName?: string;
   trait?: TraitId;
+  gender: "male" | "female";
 } | null {
   const params = new URLSearchParams(window.location.search);
   const profileId = params.get("p") as ProfileId | null;
   if (!profileId) return null;
 
-  // Validate that the profile exists
   const profile = PROFILES.find((pr) => pr.profile_id === profileId);
   if (!profile) return null;
 
   const userName = params.get("n") || undefined;
   const trait = (params.get("t") as TraitId) || undefined;
+  const gender = params.get("g") === "female" ? "female" as const : "male" as const;
 
-  return { profileId, userName, trait };
+  return { profileId, userName, trait, gender };
 }
 
 /**
@@ -81,7 +82,7 @@ export const DownloadView: React.FC = () => {
       ? TRAIT_LABELS[shareData.trait] || undefined
       : undefined;
 
-    generateProfileImage(profile, shareData.userName, traitText)
+    generateProfileImage(profile, shareData.userName, traitText, shareData.gender)
       .then((dataUrl) => {
         setImageUrl(dataUrl);
         setLoading(false);
@@ -98,7 +99,7 @@ export const DownloadView: React.FC = () => {
     if (!imageUrl) return;
     const link = document.createElement("a");
     link.href = imageUrl;
-    link.download = `security-profile-${shareData?.userName || "result"}.png`;
+    link.download = `security-profile-${shareData?.userName || "result"}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -112,20 +113,6 @@ export const DownloadView: React.FC = () => {
   return (
     <div className="app-root">
       <main className="shell">
-        {/* Microsoft-branded header */}
-        <header className="app-header">
-          <div className="app-brand">
-            <svg className="ms-logo" viewBox="0 0 21 21" aria-hidden="true">
-              <rect x="0" y="0" width="10" height="10" fill="#f25022" />
-              <rect x="11" y="0" width="10" height="10" fill="#7fba00" />
-              <rect x="0" y="11" width="10" height="10" fill="#00a4ef" />
-              <rect x="11" y="11" width="10" height="10" fill="#ffb900" />
-            </svg>
-            <span className="brand-title">Security Summit</span>
-          </div>
-          <div className="app-subtitle">Tu perfil de seguridad</div>
-        </header>
-
         <section className="screen-container">
           <div className="screen screen-visible">
             <div className="card">

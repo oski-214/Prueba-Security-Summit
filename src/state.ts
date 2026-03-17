@@ -1,7 +1,9 @@
-import type { OptionId } from "./data/scenarios";
 import type { ProfileId, ScoreVector } from "./data/profiles";
-import { SCENARIOS } from "./data/scenarios";
 import { PROFILE_PROTOTYPES } from "./data/profiles";
+import type { OptionId, Question } from "./data/questions";
+import { CATEGORY_WEIGHTS } from "./data/questions";
+
+export type { OptionId };
 
 export type Step =
   | "landing"
@@ -13,7 +15,7 @@ export type Step =
   | "share"; // Final step: QR code + downloadable profile image
 
 export type Answer = {
-  scenarioId: string;
+  scenarioId: string;  // maps to Question.id
   optionId: OptionId;
   ts: number;
 };
@@ -26,14 +28,19 @@ export type SessionResult = {
   score: ScoreVector;
 };
 
+export type Gender = "male" | "female";
+
 export type SessionState = {
   sessionId: string;
   userName?: string;
+  gender: Gender;
   step: Step;
   scenarioIndex: number;
   answers: Answer[];
   score: ScoreVector;
   result?: SessionResult;
+  /** The random subset of questions selected for this session */
+  questions: Question[];
 };
 
 const SCORE_UI_MIN = -2;
@@ -49,9 +56,11 @@ export const initialScore = (): ScoreVector => ({
 export const createEmptySessionState = (sessionId: string): SessionState => ({
   sessionId,
   step: "landing",
+  gender: "male",
   scenarioIndex: 0,
   answers: [],
-  score: initialScore()
+  score: initialScore(),
+  questions: [],
 });
 
 export const normalizeScoreForUi = (score: ScoreVector): ScoreVector => ({
@@ -64,28 +73,32 @@ export const normalizeScoreForUi = (score: ScoreVector): ScoreVector => ({
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value));
 
-export const recomputeScore = (answers: Answer[]): ScoreVector => {
+/**
+ * Recompute the score vector from answers.
+ * For each correctly answered question, add the category weight vector.
+ * Wrong answers contribute nothing.
+ * `questions` must be the session's selected question set.
+ */
+export const recomputeScore = (answers: Answer[], questions: Question[]): ScoreVector => {
   const aggregate = answers.reduce<ScoreVector>(
     (acc, answer) => {
-      const scenario = SCENARIOS.find(
-        (s) => s.scenario_id === answer.scenarioId
-      );
-      if (!scenario) return acc;
-      const option = scenario.options.find(
-        (o) => o.option_id === answer.optionId
-      );
-      if (!option) return acc;
+      const question = questions.find((q) => q.id === answer.scenarioId);
+      if (!question) return acc;
+
+      // Only add weight if the answer is correct
+      if (answer.optionId !== question.correctAnswer) return acc;
+
+      const weight = CATEGORY_WEIGHTS[question.category];
       return {
-        tech_depth: acc.tech_depth + option.weights.tech_depth,
-        posture: acc.posture + option.weights.posture,
-        governance: acc.governance + option.weights.governance,
-        risk_style: acc.risk_style + option.weights.risk_style
+        tech_depth: acc.tech_depth + weight.tech_depth,
+        posture: acc.posture + weight.posture,
+        governance: acc.governance + weight.governance,
+        risk_style: acc.risk_style + weight.risk_style
       };
     },
     initialScore()
   );
 
-  // Intentionally no clamp here: distances must use raw score.
   return aggregate;
 };
 
@@ -155,8 +168,8 @@ const l2Distance = (a: ScoreVector, b: ScoreVector): number => {
   return Math.sqrt(dt * dt + dp * dp + dg * dg + dr * dr);
 };
 
-export const computeResult = (answers: Answer[], sessionId: string): SessionResult => {
-  const scoreRaw = recomputeScore(answers);
+export const computeResult = (answers: Answer[], sessionId: string, questions: Question[]): SessionResult => {
+  const scoreRaw = recomputeScore(answers, questions);
   const profileId = chooseProfile(scoreRaw, sessionId);
   const trait = computeTrait(normalizeScoreForUi(scoreRaw));
   return { profileId, trait, score: scoreRaw };

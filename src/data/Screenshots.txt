@@ -1,0 +1,522 @@
+===============================
+QUESTION 1
+===============================
+Which email header should you check to verify the actual sender of an email?
+
+A) From header only
+B) Reply-To header
+C) Return-Path and Received headers
+D) Subject line
+
+CORRECT ANSWER: C) Return-Path and Received headers
+
+
+===============================
+QUESTION 2
+===============================
+Which MFA method is most resistant to SIM-swapping attacks?
+
+A) SMS-based OTP
+B) Email-based verification
+C) Push notifications
+D) Hardware security keys (FIDO2)
+
+CORRECT ANSWER: D) Hardware security keys (FIDO2)
+
+
+===============================
+QUESTION 3
+===============================
+You receive an email claiming your Microsoft 365 subscription will be cancelled unless you update your payment information.
+The link directs you to "microsoft-secure-payment.xyz".
+What type of attack is this?
+
+A) Spam
+B) Phishing
+C) Spear phishing
+D) Business email compromise (BEC)
+
+CORRECT ANSWER: C) Spear phishing
+
+
+===============================
+QUESTION 4
+===============================
+Which security control helps prevent data exfiltration via USB drives?
+
+A) Network firewall
+B) Endpoint DLP with device control
+C) Email filtering
+D) Antivirus software
+
+CORRECT ANSWER: B) Endpoint DLP with device control
+
+
+===============================
+QUESTION 5
+===============================
+What does UEBA stand for in insider threat detection?
+
+A) User Event Behavioral Analysis
+B) Unified Endpoint Behavioral Analytics
+C) User and Entity Behavior Analytics
+D) Universal Endpoint Behavior Assessment
+
+CORRECT ANSWER: C) User and Entity Behavior Analytics
+
+
+===============================
+QUESTION 6
+===============================
+Which behavior could indicate a potential insider threat?
+
+A) Logging in during business hours
+B) Accessing only assigned applications
+C) Accessing files outside job scope during off-hours
+D) Resetting a forgotten password
+
+CORRECT ANSWER: C) Accessing files outside job scope during off-hours
+
+
+===============================
+QUESTION 7
+===============================
+What is a "prompt injection" attack in Large Language Models?
+
+A) Injecting malware into AI infrastructure
+B) Overloading the model with requests
+C) Crafting inputs that override system instructions
+D) Stealing training datasets
+
+CORRECT ANSWER: C) Crafting inputs that override system instructions
+
+
+===============================
+QUESTION 8
+===============================
+A departing employee downloads a large volume of customer data.
+What should a DLP system do?
+
+A) Allow the transfer but log it
+B) Encrypt the data automatically
+C) Block the transfer and alert security
+D) Ignore the action
+
+CORRECT ANSWER: C) Block the transfer and alert security
+
+
+===============================
+QUESTION 9
+===============================
+What is "whaling" in phishing attacks?
+
+A) Random mass phishing
+B) Phishing targeting IT staff
+C) Phishing targeting executives
+D) Phishing using attachments only
+
+CORRECT ANSWER: C) Phishing targeting executives
+
+
+===============================
+QUESTION 10
+===============================
+You receive an email from "IT-Support@microso0ft.com" asking you to verify your credentials.
+What should you do?
+
+A) Click the link and verify
+B) Reply asking for confirmation
+C) Ignore the email
+D) Report the email as phishing
+
+CORRECT ANSWER: D) Report the email as phishing
+
+
+===============================
+QUESTION 11
+===============================
+What is "model poisoning" in machine learning security?
+
+A) Stealing a trained model
+B) Injecting malicious prompts
+C) Tampering with training data
+D) Disabling model endpoints
+
+CORRECT ANSWER: C) Tampering with training data
+
+
+===============================
+QUESTION 12
+===============================
+What is an MFA fatigue attack?
+
+A) Disabling MFA services
+B) Repeated MFA prompts to trick approval
+C) Credential stuffing with MFA
+D) Token replay attack
+
+CORRECT ANSWER: B) Repeated MFA prompts to trick approval
+
+
+===============================
+QUESTION 13
+===============================
+What is the principle of least privilege?
+
+A) Giving all users admin access
+B) Giving temporary access to everyone
+C) Granting only necessary access
+D) Removing access after incidents
+
+CORRECT ANSWER: C) Granting only necessary access
+
+
+===============================
+QUESTION 14
+===============================
+A fingerprint used for authentication is classified as:
+
+A) Something you know
+B) Something you have
+C) Something you are
+D) Something you share
+
+CORRECT ANSWER: C) Something you are
+
+
+===============================
+QUESTION 15
+===============================
+Which defense helps protect against adversarial examples in image classification?
+
+A) Larger datasets
+B) Encryption
+C) Adversarial training and preprocessing
+D) Rate limiting
+
+CORRECT ANSWER: C) Adversarial training and preprocessing
+
+
+===============================
+QUESTION 16
+===============================
+In Azure AD, Conditional Access policies are used to:
+
+A) Create users automatically
+B) Assign licenses
+C) Require MFA based on conditions
+D) Encrypt email messages
+
+CORRECT ANSWER: C) Require MFA based on conditions
+
+
+===============================
+QUESTION 17
+===============================
+What is the recommended approach to add MFA for legacy applications?
+
+A) Rewrite the application
+B) Disable the application
+C) Use a reverse proxy or identity provider
+D) Ignore MFA requirements
+
+CORRECT ANSWER: C) Use a reverse proxy or identity provider
+
+
+===============================
+QUESTION 18
+===============================
+Which is a common red flag in phishing emails?
+
+A) Personalized greeting
+B) Company logo
+C) Urgent language demanding action
+D) Proper grammar
+
+CORRECT ANSWER: C) Urgent language demanding action
+
+
+===============================
+QUESTION 19
+===============================
+How does SSE differ from SASE (Secure Access Service Edge)?
+
+A) SSE and SASE are identical
+B) SSE is the security component of SASE, without SD-WAN networking
+C) SASE is a subset of SSE
+D) SSE only works on-premises
+
+CORRECT ANSWER: B) SSE is the security component of SASE, without SD-WAN networking
+
+
+===============================
+QUESTION 20
+===============================
+What is the recommended timeframe for patching critical vulnerabilities according to industry best practices?
+
+A) 30 days
+B) 14 days or less
+C) 90 days
+D) 6 months
+
+CORRECT ANSWER: B) 14 days or less
+
+
+===============================
+QUESTION 21
+===============================
+What is the primary function of a Cloud Access Security Broker (CASB)?
+
+A) Blocking all cloud applications
+B) Providing visibility, compliance, and data protection for SaaS applications
+C) Speeding up internet connections
+D) Managing cloud infrastructure costs
+
+CORRECT ANSWER: B) Providing visibility, compliance, and data protection for SaaS applications
+
+
+===============================
+QUESTION 22
+===============================
+What are the three core components of Security Service Edge (SSE)?
+
+A) Firewall, VPN, and Antivirus
+B) CASB, SWG, and ZTNA
+C) SIEM, SOAR, and EDR
+D) DNS, DHCP, and NAT
+
+CORRECT ANSWER: B) CASB, SWG, and ZTNA
+
+
+===============================
+QUESTION 23
+===============================
+Which current encryption method is most vulnerable to quantum computing attacks?
+
+A) AES-256
+B) RSA-2048
+C) SHA-256
+D) ChaCha20
+
+CORRECT ANSWER: B) RSA-2048
+
+
+===============================
+QUESTION 24
+===============================
+How does quantum key distribution (QKD) detect eavesdropping?
+
+A) By using stronger encryption
+B) By detecting disturbances in quantum states caused by measurement
+C) By using longer keys
+D) By monitoring network traffic
+
+CORRECT ANSWER: B) By detecting disturbances in quantum states caused by measurement
+
+
+===============================
+QUESTION 25
+===============================
+What is "Harvest Now, Decrypt Later" in quantum security?
+
+A) A farming optimization technique
+B) Collecting encrypted data now to decrypt with future quantum computers
+C) A quantum key distribution method
+D) A data backup strategy
+
+CORRECT ANSWER: B) Collecting encrypted data now to decrypt with future quantum computers
+
+
+===============================
+QUESTION 26
+===============================
+What is the primary benefit of using AI for malware detection?
+
+A) It can only detect known malware
+B) It can identify zero-day threats through behavioral analysis
+C) It eliminates the need for antivirus software
+D) It makes systems run faster
+
+CORRECT ANSWER: B) It can identify zero-day threats through behavioral analysis
+
+
+===============================
+QUESTION 27
+===============================
+What is a "model inversion" attack?
+
+A) Running models backwards
+B) Extracting training data or sensitive features from model outputs
+C) Inverting model weights
+D) Converting models between frameworks
+
+CORRECT ANSWER: B) Extracting training data or sensitive features from model outputs
+
+
+===============================
+QUESTION 28
+===============================
+What is the risk of not maintaining a complete asset inventory for patch management?
+
+A) No significant risk
+B) Shadow IT and unpatched systems create security blind spots
+C) Only affects performance
+D) Reduces software licensing costs
+
+CORRECT ANSWER: B) Shadow IT and unpatched systems create security blind spots
+
+
+===============================
+QUESTION 29
+===============================
+What is CVSS and how is it used in vulnerability management?
+
+A) A patching automation tool
+B) A scoring system that rates vulnerability severity from 0 to 10
+C) A type of security certificate
+D) A network scanning protocol
+
+CORRECT ANSWER: B) A scoring system that rates vulnerability severity from 0 to 10
+
+
+===============================
+QUESTION 30
+===============================
+How does AI enhance phishing detection beyond traditional methods?
+
+A) By blocking all emails
+B) By analyzing writing patterns, sender behavior, and contextual anomalies
+C) By only checking email headers
+D) By ignoring email attachments
+
+CORRECT ANSWER: B) By analyzing writing patterns, sender behavior, and contextual anomalies
+
+
+===============================
+QUESTION 31
+===============================
+How can AI improve Security Operations Center (SOC) efficiency?
+
+A) By replacing all human analysts
+B) By automating alert triage and reducing false positives
+C) By generating more alerts
+D) By slowing down incident response
+
+CORRECT ANSWER: B) By automating alert triage and reducing false positives
+
+
+===============================
+QUESTION 32
+===============================
+What is a "zero-day" vulnerability?
+
+A) A vulnerability that takes zero days to patch
+B) A vulnerability exploited before a patch is available
+C) A vulnerability with zero impact
+D) A vulnerability found on day one of deployment
+
+CORRECT ANSWER: B) A vulnerability exploited before a patch is available
+
+
+===============================
+QUESTION 33
+===============================
+Which NIST post-quantum cryptography standard is based on lattice problems?
+
+A) RSA-4096
+B) CRYSTALS-Kyber
+C) Triple DES
+D) Blowfish
+
+CORRECT ANSWER: B) CRYSTALS-Kyber
+
+
+===============================
+QUESTION 34
+===============================
+In Microsoft's Responsible AI principles, which is NOT a core principle?
+
+A) Fairness
+B) Privacy and Security
+C) Profit Maximization
+D) Transparency
+
+CORRECT ANSWER: C) Profit Maximization
+
+
+===============================
+QUESTION 35
+===============================
+In Microsoft Copilot for Security, what capability does AI provide for threat hunting?
+
+A) Only generates reports
+B) Natural language queries to investigate threats and summarize incidents
+C) Blocks all network traffic
+D) Replaces security tools entirely
+
+CORRECT ANSWER: B) Natural language queries to investigate threats and summarize incidents
+
+
+===============================
+QUESTION 36
+===============================
+What is "Patch Tuesday" in the Microsoft ecosystem?
+
+A) A random day for updates
+B) The second Tuesday of each month when Microsoft releases security updates
+C) A weekly patching schedule
+D) An annual security conference
+
+CORRECT ANSWER: B) The second Tuesday of each month when Microsoft releases security updates
+
+
+===============================
+QUESTION 37
+===============================
+What is a key consideration when deploying AI for automated incident response?
+
+A) AI should make all decisions without human oversight
+B) Human-in-the-loop validation for critical actions
+C) Disable all existing security controls
+D) AI responses should be delayed by 24 hours
+
+CORRECT ANSWER: B) Human-in-the-loop validation for critical actions
+
+
+===============================
+QUESTION 38
+===============================
+What does "crypto agility" mean in the context of quantum threats?
+
+A) Faster encryption speeds
+B) The ability to quickly switch cryptographic algorithms
+C) Agile development for crypto software
+D) Mobile cryptography
+
+CORRECT ANSWER: B) The ability to quickly switch cryptographic algorithms
+
+
+===============================
+QUESTION 39
+===============================
+How does Zero Trust Network Access (ZTNA) improve upon traditional VPN?
+
+A) ZTNA is slower but more secure
+B) ZTNA provides application-level access instead of network-level access
+C) ZTNA only works for remote users
+D) ZTNA eliminates the need for authentication
+
+CORRECT ANSWER: B) ZTNA provides application-level access instead of network-level access
+
+
+===============================
+QUESTION 40
+===============================
+What security capability does a Secure Web Gateway (SWG) provide?
+
+A) Only URL filtering
+B) Web traffic inspection, malware protection, and policy enforcement
+C) Email security only
+D) Physical building access control
+
+CORRECT ANSWER: B) Web traffic inspection, malware protection, and policy enforcement

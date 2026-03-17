@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { SCENARIOS } from "./data/scenarios";
 import { PROFILES } from "./data/profiles";
+import { selectRandomQuestions } from "./data/questions";
 import {
   Answer,
+  Gender,
   SessionState,
   Step,
   TraitId,
@@ -10,7 +11,12 @@ import {
   createEmptySessionState
 } from "./state";
 import { Avatar } from "./components/Avatar";
+import { getBannerUrl } from "./data/avatarImages";
 import { generateProfileImage } from "./generateProfileImage";
+import maleAvatar from "./data/maleAvatars/male_avatar.png";
+import maleAvatarSelected from "./data/maleAvatars/male_avatar_selected.png";
+import femaleAvatar from "./data/femaleAvatars/female_avatar.png";
+import femaleAvatarSelected from "./data/femaleAvatars/female_avatar_selected.png";
 import QRCode from "qrcode";
 
 const STORAGE_KEY = "security-profile-session";
@@ -27,11 +33,17 @@ const loadInitialState = (): SessionState => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as SessionState;
-      return parsed;
+      // Validate the session has the new `questions` field;
+      // old sessions without it are discarded to avoid broken state.
+      if (parsed && Array.isArray(parsed.questions)) {
+        return parsed;
+      }
     }
   } catch {
     // ignore
   }
+  // Clear stale data and start fresh
+  try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   return createEmptySessionState(createSessionId());
 };
 
@@ -54,6 +66,12 @@ export const App: React.FC = () => {
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [pendingName, setPendingName] = useState("");
+  const [pendingGender, setPendingGender] = useState<Gender | null>(null);
+  const [hoveredGender, setHoveredGender] = useState<Gender | null>(null);
+
+  // -- Slide transition state --
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [prevStep, setPrevStep] = useState<Step | null>(null);
 
   // -- Share step state: generated profile image + QR code --
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
@@ -75,10 +93,10 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (!state) return;
-    if (state.step === "scenario") {
-      const scenario = SCENARIOS[state.scenarioIndex];
+    if (state.step === "scenario" && state.questions.length > 0) {
+      const question = state.questions[state.scenarioIndex];
       const existing = state.answers.find(
-        (a) => a.scenarioId === scenario.scenario_id
+        (a) => a.scenarioId === question.id
       );
       setSelectedOption(existing?.optionId ?? null);
     } else {
@@ -102,7 +120,8 @@ export const App: React.FC = () => {
       const imageDataUrl = await generateProfileImage(
         prof,
         state.userName,
-        traitText
+        traitText,
+        state.gender
       );
       setProfileImageUrl(imageDataUrl);
 
@@ -115,6 +134,7 @@ export const App: React.FC = () => {
       shareParams.set("p", state.result!.profileId);
       if (state.userName) shareParams.set("n", state.userName);
       if (state.result!.trait) shareParams.set("t", state.result!.trait);
+      shareParams.set("g", state.gender);
       const shareUrl = `${baseUrl}?${shareParams.toString()}`;
 
       const qrDataUrl = await QRCode.toDataURL(shareUrl, {
@@ -138,11 +158,18 @@ export const App: React.FC = () => {
     if (!profileImageUrl) return;
     const link = document.createElement("a");
     link.href = profileImageUrl;
-    link.download = `security-profile-${state?.userName || "result"}.png`;
+    link.download = `security-profile-${state?.userName || "result"}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }, [profileImageUrl, state?.userName]);
+
+  // Auto-generate the profile image when arriving at the result step
+  useEffect(() => {
+    if (!state || state.step !== "result" || !state.result) return;
+    if (profileImageUrl || isGenerating) return;
+    handleGenerateShare();
+  }, [state?.step, state?.result, profileImageUrl, isGenerating, handleGenerateShare]);
 
   // ── Early return: nothing to render until state is loaded ──
   if (!state) {
@@ -154,21 +181,46 @@ export const App: React.FC = () => {
     (PROFILES.find((p) => p.profile_id === state.result.profileId) ??
       PROFILES[0]);
 
-  const currentScenario =
-    state.step === "scenario" ? SCENARIOS[state.scenarioIndex] : null;
+  const currentQuestion =
+    state.step === "scenario" && state.questions.length > 0
+      ? state.questions[state.scenarioIndex]
+      : null;
 
+  const totalQuestions = state.questions.length;
+
+  /** Navigate between steps with a fade-out / fade-in transition */
   const handleGoToStep = (step: Step) => {
-    setState((prev) => (prev ? { ...prev, step } : prev));
+    if (isTransitioning) return;
+    setPrevStep(state.step);
+    setIsTransitioning(true);
+    // After exit animation completes, switch to new step
+    setTimeout(() => {
+      setState((prev) => (prev ? { ...prev, step } : prev));
+      setIsTransitioning(false);
+      setPrevStep(null);
+    }, 250); // matches CSS exit animation duration
   };
 
   const handleStart = () => {
+    if (isTransitioning) return;
     const newSessionId = createSessionId();
     const fresh: SessionState = {
       ...createEmptySessionState(newSessionId),
-      step: "name"
+      step: "landing", // will transition to "name"
+      questions: selectRandomQuestions(),
     };
     setPendingName("");
+    setPendingGender(null);
+    setHoveredGender(null);
     setState(fresh);
+    // Transition to name step
+    setPrevStep("landing");
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setState((prev) => prev ? { ...prev, step: "name" } : prev);
+      setIsTransitioning(false);
+      setPrevStep(null);
+    }, 250);
   };
 
   const handleContinueFromBrief = () => {
@@ -181,10 +233,11 @@ export const App: React.FC = () => {
         ? {
             ...prev,
             userName: pendingName.trim().slice(0, 24) || undefined,
-            step: "brief"
+            gender: pendingGender || "male",
           }
         : prev
     );
+    handleGoToStep("brief");
   };
 
   const handleSkipName = () => {
@@ -194,19 +247,20 @@ export const App: React.FC = () => {
         ? {
             ...prev,
             userName: undefined,
-            step: "brief"
+            gender: pendingGender || "male",
           }
         : prev
     );
+    handleGoToStep("brief");
   };
 
   const handleSelectOption = (optionId: string) => {
-    if (!currentScenario) return;
+    if (!currentQuestion) return;
     setSelectedOption(optionId);
   };
 
   const handleNextScenario = () => {
-    if (!currentScenario || !selectedOption || isAdvancing) return;
+    if (!currentQuestion || !selectedOption || isAdvancing) return;
 
     setIsAdvancing(true);
     setTimeout(() => setIsAdvancing(false), 300);
@@ -215,18 +269,18 @@ export const App: React.FC = () => {
       if (!prev) return prev;
       const now = Date.now();
       const filtered = prev.answers.filter(
-        (a) => a.scenarioId !== currentScenario.scenario_id
+        (a) => a.scenarioId !== currentQuestion.id
       );
       const updatedAnswers: Answer[] = [
         ...filtered,
         {
-          scenarioId: currentScenario.scenario_id,
+          scenarioId: currentQuestion.id,
           optionId: selectedOption as any,
           ts: now
         }
       ];
 
-      const isLast = prev.scenarioIndex === SCENARIOS.length - 1;
+      const isLast = prev.scenarioIndex === prev.questions.length - 1;
 
       if (isLast) {
         const nextState: SessionState = {
@@ -238,7 +292,7 @@ export const App: React.FC = () => {
         setTimeout(() => {
           setState((current) => {
             if (!current) return current;
-            const result = computeResult(updatedAnswers, current.sessionId);
+            const result = computeResult(updatedAnswers, current.sessionId, current.questions);
             return {
               ...current,
               answers: updatedAnswers,
@@ -274,10 +328,14 @@ export const App: React.FC = () => {
 
   const handleReset = () => {
     const newSession = createEmptySessionState(createSessionId());
+    newSession.questions = selectRandomQuestions();
+    setProfileImageUrl(null);
+    setQrCodeUrl(null);
+    setPendingName("");
+    setPendingGender(null);
+    setHoveredGender(null);
     setState(newSession);
   };
-
-  const answeredCount = state.answers.length;
 
   return (
     <div className="app-root">
@@ -295,18 +353,18 @@ export const App: React.FC = () => {
             <span className="brand-title">Security Summit</span>
           </div>
           <div className="app-subtitle">
-            Decisiones rápidas en 3 situaciones. 3 minutos.
+            3 preguntas de seguridad. 1 minuto.
           </div>
         </header>
 
-        <section className="screen-container">
+        <section className={`screen-container ${isTransitioning ? "screen-exiting" : ""}`}>
           {state.step === "landing" && (
             <div className="screen screen-visible">
               <div className="card">
                 <h2 className="screen-title">Tu perfil en seguridad</h2>
                 <p className="screen-body">
-                  Simulación breve para explorar cómo decides en situaciones de
-                  seguridad reales.
+                  Quiz rápido de seguridad: responde 3 preguntas y descubre
+                  tu perfil.
                 </p>
                 <button
                   className="btn btn-primary"
@@ -326,7 +384,7 @@ export const App: React.FC = () => {
             <div className="screen screen-visible">
               <div className="card">
                 <div className="progress">
-                  <div className="progress-label">Situaciones 0/3</div>
+                  <div className="progress-label">Preguntas 0/{totalQuestions}</div>
                   <div className="progress-bar">
                     <div
                       className="progress-bar-fill"
@@ -336,10 +394,10 @@ export const App: React.FC = () => {
                 </div>
                 <h2 className="screen-title">Antes de empezar</h2>
                 <ul className="brief-list">
-                  <li>No hay respuestas correctas.</li>
-                  <li>Elige lo que harías primero, con información incompleta.</li>
+                  <li>3 preguntas de opción múltiple.</li>
+                  <li>Solo una respuesta es correcta.</li>
                   <li>
-                    Responde pensando en tu entorno real, no en el ideal.
+                    Tu perfil se asigna según tus aciertos en cada área.
                   </li>
                 </ul>
                 <button
@@ -355,30 +413,61 @@ export const App: React.FC = () => {
 
           {state.step === "name" && (
             <div className="screen screen-visible">
-              <div className="card">
-                <h2 className="screen-title">Antes de empezar</h2>
-                <p className="screen-body">
-                  ¿Cómo te llamas? Lo usaremos solo para personalizar tu
-                  resultado.
-                </p>
-                <div className="name-field">
-                  <label className="name-label" htmlFor="user-name-input">
-                    ¿Cómo te llamas?
-                  </label>
-                  <input
-                    id="user-name-input"
-                    className="name-input"
-                    type="text"
-                    placeholder="Nombre (opcional)"
-                    maxLength={24}
-                    value={pendingName}
-                    onChange={(e) => setPendingName(e.target.value)}
-                  />
-                  <p className="name-helper">
-                    Lo usaremos solo para personalizar tu resultado.
-                  </p>
+              <div className="card card-name">
+                {/* Avatar selector: both avatars side by side at the top */}
+                <div className="avatar-selector">
+                  <button
+                    type="button"
+                    className={`avatar-pick ${
+                      pendingGender === "male" ? "avatar-pick-selected" : ""
+                    } ${pendingGender === "female" ? "avatar-pick-dimmed" : ""}`}
+                    onClick={() => setPendingGender("male")}
+                    onMouseEnter={() => setHoveredGender("male")}
+                    onMouseLeave={() => setHoveredGender(null)}
+                  >
+                    <img
+                      src={pendingGender === "male" || hoveredGender === "male" ? maleAvatarSelected : maleAvatar}
+                      alt="Avatar masculino"
+                      className="avatar-pick-img"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    className={`avatar-pick avatar-pick-female ${
+                      pendingGender === "female" ? "avatar-pick-selected" : ""
+                    } ${pendingGender === "male" ? "avatar-pick-dimmed" : ""}`}
+                    onClick={() => setPendingGender("female")}
+                    onMouseEnter={() => setHoveredGender("female")}
+                    onMouseLeave={() => setHoveredGender(null)}
+                  >
+                    <img
+                      src={pendingGender === "female" || hoveredGender === "female" ? femaleAvatarSelected : femaleAvatar}
+                      alt="Avatar femenino"
+                      className="avatar-pick-img"
+                    />
+                  </button>
+                  {/* Bottom fade that blends avatars into the card */}
+                  <div className="avatar-selector-fade" />
                 </div>
-                <div className="scenario-actions">
+
+                <div className="name-section">
+                  <h2 className="screen-title">Elige tu avatar</h2>
+                  <div className="name-field">
+                    <label className="name-label" htmlFor="user-name-input">
+                      ¿Cómo te llamas?
+                    </label>
+                    <input
+                      id="user-name-input"
+                      className="name-input"
+                      type="text"
+                      placeholder="Nombre (opcional)"
+                      maxLength={24}
+                      value={pendingName}
+                      onChange={(e) => setPendingName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="scenario-actions">
                   <button
                     type="button"
                     className="btn btn-ghost"
@@ -394,39 +483,34 @@ export const App: React.FC = () => {
                     Continuar
                   </button>
                 </div>
+                </div> {/* end name-section */}
               </div>
             </div>
           )}
 
-          {state.step === "scenario" && currentScenario && (
+          {state.step === "scenario" && currentQuestion && (
             <div className="screen screen-visible">
               <div className="card">
                 <div className="progress">
                   <div className="progress-label">
-                    Situaciones {answeredCount}/{SCENARIOS.length}
+                    Pregunta {state.scenarioIndex + 1}/{totalQuestions}
                   </div>
                   <div className="progress-bar">
                     <div
                       className="progress-bar-fill"
                       style={{
-                        width: `${(state.scenarioIndex / SCENARIOS.length) * 100}%`
+                        width: `${(state.scenarioIndex / totalQuestions) * 100}%`
                       }}
                     />
                   </div>
                 </div>
                 <p className="scenario-step">
-                  Situación {state.scenarioIndex + 1} de {SCENARIOS.length}
+                  Pregunta {state.scenarioIndex + 1} de {totalQuestions}
                 </p>
-                <h2 className="screen-title">{currentScenario.title}</h2>
-                <p className="screen-body">{currentScenario.context}</p>
-                <p className="scenario-question">
-                  <span className="scenario-question-label">
-                    ¿Qué haces primero?
-                  </span>
-                </p>
+                <h2 className="screen-title">{currentQuestion.question}</h2>
 
                 <div className="options-grid">
-                  {currentScenario.options.map((option) => {
+                  {currentQuestion.options.map((option) => {
                     const selected = selectedOption === option.option_id;
                     return (
                       <button
@@ -484,39 +568,23 @@ export const App: React.FC = () => {
           {state.step === "result" && state.result && profile && (
             <div className="screen screen-visible">
               <div className="card">
-                <h2 className="screen-title">
-                  {state.userName
-                    ? `${state.userName}, tu perfil`
-                    : "Tu perfil"}
-                </h2>
-                <Avatar profile={profile} />
-                <h3 className="profile-name">{profile.name}</h3>
-                <p className="screen-body">{profile.summary_template}</p>
-
-                <div className="result-section">
-                  <h4>Fortaleza</h4>
-                  <p>{profile.strength_template}</p>
-                </div>
-
-                <div className="result-section">
-                  <h4>Punto ciego potencial</h4>
-                  <p>{profile.blindspot_template}</p>
-                </div>
-
-                <div className="result-section">
-                  <h4>Reto</h4>
-                  <p>{profile.challenge_template}</p>
-                </div>
-
-                {traitLabel(state.result.trait) && (
-                  <p className="trait-line">
-                    {traitLabel(state.result.trait)}
-                  </p>
+                {/* Show the generated profile image as the result card */}
+                {profileImageUrl ? (
+                  <div className="share-preview">
+                    <img
+                      src={profileImageUrl}
+                      alt="Tu perfil de seguridad"
+                      className="share-preview-img"
+                    />
+                  </div>
+                ) : (
+                  <div className="card-centered">
+                    <div className="loader" aria-hidden="true" />
+                    <p className="screen-body computing-text">
+                      Generando tu perfil…
+                    </p>
+                  </div>
                 )}
-
-                <p className="microcopy microcopy-anchor">
-                  Capacidades representadas: {profile.product_anchor}.
-                </p>
 
                 {/* Actions: download as image / QR or restart */}
                 <div className="result-actions">
@@ -524,11 +592,8 @@ export const App: React.FC = () => {
                     type="button"
                     className="btn btn-primary"
                     onClick={() => {
-                      // Navigate to share step and generate image + QR
-                      setProfileImageUrl(null);
                       setQrCodeUrl(null);
                       handleGoToStep("share");
-                      // Start generation after navigating
                       setTimeout(() => handleGenerateShare(), 50);
                     }}
                   >
