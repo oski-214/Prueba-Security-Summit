@@ -16,7 +16,7 @@ import { generateProfileImage } from "./generateProfileImage";
 import maleAvatar from "./data/maleAvatars/male_avatar.png";
 import maleAvatarSelected from "./data/maleAvatars/male_avatar_selected.png";
 import femaleAvatar from "./data/femaleAvatars/female_avatar.png";
-import femaleAvatarSelected from "./data/femaleAvatars/female_avatar_selected.png";
+import femaleAvatarSelected from "./data/femaleAvatars/female_Avatar_selected.png";
 import msSecurityLogo from "./data/background/Microsoft-Security-logo-horiz-c-gray-rgb.png";
 import QRCode from "qrcode";
 
