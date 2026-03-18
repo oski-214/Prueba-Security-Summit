@@ -37,13 +37,28 @@ Verás algo como:
 
 Abre la URL de **Network** en tu PC. Los QR generados usarán esa IP y serán accesibles desde cualquier dispositivo en la misma Wi-Fi.
 
-## Despliegue en GitHub Pages
+## Despliegue en GitHub Pages (Acceso Público)
+
+Para que el QR funcione desde **cualquier lugar** (sin necesidad de estar en la misma red WiFi), despliega la app en GitHub Pages:
+
+### Opción 1: Despliegue automático (recomendado)
+
+1. Sube el código a un repositorio en GitHub llamado `SecuritySummit` (o cambia el nombre en `vite.config.mts`)
+2. Ve a **Settings > Pages** en tu repositorio
+3. En "Build and deployment" selecciona **GitHub Actions**
+4. Haz push a la rama `main` — el workflow desplegará automáticamente
+
+Tu app estará disponible en: `https://tu-usuario.github.io/SecuritySummit/`
+
+### Opción 2: Despliegue manual
 
 ```bash
 npm run build
 ```
 
-Sube el contenido de `dist/` a GitHub Pages. Los QR apuntarán automáticamente a la URL de producción.
+Sube el contenido de `dist/` a GitHub Pages o cualquier hosting estático.
+
+> **Nota:** Asegúrate de que el nombre del repositorio coincida con el valor de `base` en `vite.config.mts`. Si tu repositorio se llama diferente, actualiza el valor.
 
 ## Estructura
 
